@@ -200,7 +200,7 @@ def verifyHardware():
         connSys = wmi.WMI()
         gpus = connSys.Win32_VideoController()  # Get all video controllers / Pega todos os controladores de vídeo
 
-        amdFound = True
+        amdFound = False
         nvidiaFound = False
 
         print('   Hardware List:')
