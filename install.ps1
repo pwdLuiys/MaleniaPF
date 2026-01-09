@@ -3,6 +3,10 @@
 #This archive ensure that u have chrome-web-driver AND winget/chocolatey (we gonna need them after...)
 $ErrorActionPreference = "Stop"
 
+try {
+    Import-Module Microsoft.PowerShell.Archive -ErrorAction SilentlyContinue
+} catch {}
+
 Write-Host "MaleniaPF is preparing your PC..." -ForegroundColor Magenta
 
 function iBrowser {
