@@ -1,6 +1,8 @@
 MaleniaPF (Malenia Post-Format Tool)
 
 MaleniaPF is an automation tool designed to solve the first and most annoying problem of anyone who has just formatted their Windows: the endless hunt for video drivers. The name is a tribute to Malenia from Elden Ring because installing AMD drivers sometimes feels like a boss fight with two phases where you die at the end due to a version mismatch.
+    Yeah thats a cringe introduction, but my gf created it so... im using.
+    (thanks Emma)
 
 Currently, the project focuses on intelligent hardware detection and the automatic download of official NVIDIA and AMD installers.
 How It Works

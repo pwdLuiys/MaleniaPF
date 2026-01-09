@@ -1,26 +1,47 @@
+#I need to be 100% that the user experience is good so... the program will be downloading the chrome web-driver for the use of selenium
+#But Luiys, we'll have chrome... idfc this is a postformat tool, this is literally a post-formating tool
+#This archive ensure that u have chrome-web-driver AND winget/chocolatey (we gonna need them after...)
 $ErrorActionPreference = "Stop"
 
-Write-Host "⚔️  MaleniaPF: Blade of Miquella is preparing your PC..." -ForegroundColor Magenta
+Write-Host "MaleniaPF is preparing your PC..." -ForegroundColor Magenta
 
-# 1. Garantir que o Chrome existe, é.... eu sei que o chrome talvez você não queira... mas é so desinstalar depois confia no pai (fazer pelo edge é feio)
-$chromeExists = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App` Paths\chrome.exe -ErrorAction SilentlyContinue)
-if (!$chromeExists) {
-    Write-Host "installing Chrome webdriver" -ForegroundColor Yellow
-    winget install --id Google.Chrome -e --silent --accept-source-agreements --accept-package-agreements
+function iBrowser {
+    if (Get-Command chrome.exe -ErrorAction SilentlyContinue) {
+        Write-Host "Chrome detected" -ForegroundColor Green
+        return
+    }
+
+    Write-Host "installing chrome... yea thats right (u can uninstall it after)" -ForegroundColor Yellow
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        Write-Host "Using Winget to install Chrome..."
+        winget install --id Google.Chrome -e --silent --accept-source-agreements --accept-package-agreements
+    } 
+    else {
+        Write-Host "Winget not found. Installing Chocolatey as fallback..." -ForegroundColor Cyan
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        
+        $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
+        
+        Write-Host "Using Chocolatey to install Chrome..."
+        choco install googlechrome -y --no-progress
+    }
 }
 
-# 2. Definir onde baixar o MaleniaPF.exe
-$tempPath = "$env:TEMP\MaleniaPF.exe"
 
-# --- SUBSTITUA O LINK ABAIXO PELO LINK QUE VOCÊ COPIOU NO PASSO 3 ---
-$url = "https://github.com/pwdLuiys/MaleniaPF/releases/download/1.0/MaleniaPF.exe"
+try {
+    iBrowser
 
-Write-Host "Downloading..." -ForegroundColor Cyan
-Invoke-WebRequest -Uri $url -OutFile $tempPath
+    $tempPath = "$env:TEMP\MaleniaPF.exe"
+    $url = "LINK_DO_SEU_GITHUB_RELEASE"
 
-# 3. Executar a ferramenta
-Write-Host "Hardware detection..." -ForegroundColor Green
-Start-Process -FilePath $tempPath -Wait
+    Write-Host "⬇Downloading MaleniaPF main tool..." -ForegroundColor Cyan
+    Invoke-WebRequest -Uri $url -OutFile $tempPath
 
-# Limpeza opcional
-# Remove-Item $tempPath
+    Write-Host "Launching hardware detection..." -ForegroundColor Green
+    Start-Process -FilePath $tempPath -Wait
+
+} catch {
+    Write-Host "An unexpected error occurred: $_" -ForegroundColor Red
+}
