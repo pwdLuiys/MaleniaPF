@@ -96,8 +96,6 @@ def downloadAmd():
                 print("AMD Download - FAILED (Timeout)")
         else:
             print("No valid download link found.")
-            # Debug screenshot if nothing found / Screenshot de debug se não achou nada
-            browser.save_screenshot("debug_amd_error.png")
 
     except Exception as e:
         print(f"Error in AMD module: {e}")
@@ -225,33 +223,41 @@ def verifyHardware():
             print("No dedicated GPU (AMD/NVIDIA/Intel) found.")
             print("WTF ARE U USING?")
 
-        # CPU PART
-        cpu = cpuinfo.get_cpu_info() # Get CPU info...
-        tryCpuCatch = cpu.get('vendor_id_raw', '').lower() #Lets find the vender_id_raw peace on the dict, and if it is authenticamd is AMD, else is intel.
 
-
+            # CPU PART
         cpuIsIntel = False
         cpuIsAmd = False
-        if 'authenticamd' in tryCpuCatch:
-            print(f'{cpu['brand_raw']}...')
-            cpuIsAmd = True
-        if 'genuineintel' in tryCpuCatch:
-            print(f'{cpu['brand_raw']}')
-            cpuIsIntel = True
-        
+        try:
+            cpu = cpuinfo.get_cpu_info() # Get CPU info...
+            tryCpuCatch = cpu.get('vendor_id_raw', '').lower() #Lets find the vender_id_raw peace on the dict, and if it is authenticamd is AMD, else is intel.
 
+
+            if 'authenticamd' in tryCpuCatch:
+                print(f'{cpu['brand_raw']}...')
+                cpuIsAmd = True
+            if 'genuineintel' in tryCpuCatch:
+                print(f'{cpu['brand_raw']}')
+                cpuIsIntel = True
+                
+        except Exception as e:
+            print(f'Error: {e}')
+            
         if cpuIsAmd:
             if amdFound:
                 print('Chipset driver included in GPU package, skipping...')
             else:
                 print('Downloading cpu chipset...')
                 downloadAmd()
-        if cpuIsIntel:
+            pass
+        elif cpuIsIntel:
             if intelFound:
                 print('Chipset driver included in GPU package, skipping...')
             else:
                 print('Downloading cpu chipset...')
                 downloadIntel()
+            pass
+        else:
+            print('Bro... wtf? WHAT KIND OF CPU IS THIS')
 
     except Exception as error:
         print(f'Hardware Scan Error: {error}')
