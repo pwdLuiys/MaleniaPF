@@ -1,61 +1,99 @@
-MaleniaPF (Malenia Post-Format Tool)
+Here is the revised README in English. I have removed all emojis and stripped out the humor to keep it clean, professional, and direct, suitable for a technical portfolio or general public usage.
+MaleniaPF - Post-Format Automation Tool
 
-MaleniaPF is an automation tool designed to solve the first and most annoying problem of anyone who has just formatted their Windows: the endless hunt for video drivers. The name is a tribute to Malenia from Elden Ring because installing AMD drivers sometimes feels like a boss fight with two phases where you die at the end due to a version mismatch.
-    Yeah thats a cringe introduction, but my gf created it so... im using.
-    (thanks Emma)
+MaleniaPF is a utility designed to streamline the system configuration process after a fresh Windows installation. Its primary function is to automate the detection of hardware components (GPU and CPU) and download the appropriate official drivers, eliminating the need for manual navigation through manufacturer websites.
 
-Currently, the project focuses on intelligent hardware detection and the automatic download of official NVIDIA and AMD installers.
-How It Works
+This tool is designed to be robust, handling environment dependencies automatically to ensure execution on a clean operating system.
+Key Features
 
-The tool operates in three distinct layers to ensure you don't have to open a browser and deal with ads or confusing dropdown menus:
+    Automated Hardware Detection: Uses Windows Management Instrumentation (WMI) to identify NVIDIA, AMD, and Intel graphics cards, as well as processor architecture.
 
-    Hardware Detection: The script uses WMI (Windows Management Instrumentation) to query the operating system about which graphics cards are connected. It identifies whether you have an NVIDIA GPU, an AMD/Radeon GPU, or both (for the brave souls using hybrid setups).
+    Intelligent Download Strategies:
 
-    NVIDIA Strategy: It uses simple Web Scraping with BeautifulSoup to locate the latest NVIDIA App executable. This is the most civilized part of the code, as NVIDIA's website doesn't try to block your entry like it's a fortified castle.
+        NVIDIA: Direct scraping of the NVIDIA App installer.
 
-    AMD Strategy: Since AMD's website has several protections against automation and uses dynamic element loading, the tool uses Selenium in headless (invisible) mode. It simulates human behavior to navigate to the "Auto-Detect Tool" link and performs the download.
+        AMD: Headless browser automation (Selenium) to navigate AMD's dynamic support pages and bypass bot protection.
 
-Quick Installation (Administrator Mode)
+        Intel: Detection and retrieval of the latest Intel Driver & Support Assistant.
 
-To make life easier for those who don't want to install Python or configure environment variables on a freshly formatted PC, the tool can be invoked directly via PowerShell.
+    Environment Management: The launcher script automatically checks for and installs necessary dependencies (such as Google Chrome for the Selenium engine) using Winget, MSI, or Chocolatey.
 
-Copy and paste the command below into your PowerShell as Administrator:
+    Organized File Structure: Automatically creates a dedicated workspace in the user's directory to keep executables and downloads separate.
+
+Quick Installation
+
+The tool is designed to run via a single PowerShell command, which handles directory creation, dependency checking, and execution.
+
+    Open PowerShell as Administrator.
+
+    Run the following command:
+
 PowerShell
 
-irm https://raw.githubusercontent.com/pwdLuiys/MaleniaPF/refs/heads/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/pwdLuiys/MaleniaPF/main/install.ps1 | iex
 
-What this command does:
+What happens when you run this command?
 
-    Checks if Google Chrome is installed (required for the AMD Selenium engine). If not, it uses Winget to install it silently.
+    Dependency Check: The script verifies if Google Chrome is installed (required for AMD driver retrieval). If missing, it attempts to install it via Winget, direct MSI download, or Chocolatey.
 
-    Downloads the latest version of the executable (MaleniaPF.exe) to your temporary folder.
+    Environment Setup: It creates the directory structure at %USERPROFILE%\MaleniaPF.
 
-    Runs the detection and starts the downloads automatically.
+    Deployment: Downloads the latest MaleniaPF.exe release to the bin folder.
 
-System Requirements
+    Execution: Launches the tool to scan hardware and download drivers.
 
-    Operating System: Windows 10 or Windows 11.
+Directory Structure
 
-    Privileges: Administrator access (required for Winget and WMI to function correctly).
+To ensure a clean user environment, the tool organizes files as follows:
+Plaintext
 
-    Browser: Google Chrome or Microsoft Edge (installed automatically if necessary via the installation script).
+C:\Users\YourUsername\MaleniaPF\
+│
+├── bin\
+│   └── MaleniaPF.exe      # The main application executable
+│
+└── Downloads\
+    ├── NVIDIA_Installer.exe
+    ├── amd_software_adrenalin.exe
+    └── intel_driver_assistant.exe
 
-Technical Notes and Security
+Technical Details
 
-    Temporary Files: The tool performs an automatic cleanup of residual .crdownload files and old installers in the execution folder to avoid version conflicts.
+The application logic is divided into specific modules based on the hardware vendor:
 
-    Security: MaleniaPF does not install the drivers automatically for security reasons and user choice. It only ensures that the official and verified installers are in your folder, ready to be executed.
+    Hardware Scanning: The tool queries Win32_VideoController via WMI to determine if dedicated (NVIDIA/AMD/Intel Arc) or integrated (Intel UHD/Iris) graphics are present.
 
-    Timeout: The download monitoring has a limit of 900 seconds. If your internet is wood-powered and takes more than 15 minutes, the script will terminate the session for safety.
+    CPU Chipset Logic: If an AMD CPU is detected but a non-AMD GPU is present, the tool will still trigger the AMD download module to ensure chipset drivers are obtained.
 
+    Download Management:
+
+        Uses wget for static links (NVIDIA/Intel).
+
+        Uses Selenium with a custom Chrome WebDriver for dynamic links (AMD).
+
+        Includes automatic cleanup of partial downloads (.crdownload) and previous installer versions to prevent conflicts.
+
+Requirements
+
+    OS: Windows 10 or Windows 11 (x64).
+
+    Permissions: Administrator privileges are required for the installation script to manage dependencies.
+
+    Connection: Active internet connection required for scraping and downloading.
+
+Disclaimer
+
+This tool downloads the official installers from manufacturer websites but does not execute the driver installation silently. This is a design choice to ensure system stability and give the user control over the final installation step, as graphics driver updates often require screen flickering or system restarts.
 Roadmap
 
-The plan for MaleniaPF is to evolve from a "driver downloader" into the ultimate tool for skipping tedious setup tasks:
+Future updates planned for the project:
 
-    Support for Intel integrated GPUs.
+    Integration with Winget for bulk installation of essential software (VSCode, Browsers, Utilities).
 
-    Winget integration for bulk software installation (VSCode, Discord, Steam, Spotify, etc.).
+    System debloating scripts (telemetry removal).
 
-    Script to disable telemetry and unnecessary Windows "bloat."
+    Silent installation options for standard runtimes (DirectX, Visual C++ Redistributables).
 
-    Silent installation of essential runtimes (DirectX, Visual C++ Redistributables).
+License
+
+This project is licensed under the MIT License.

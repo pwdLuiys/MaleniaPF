@@ -1,16 +1,16 @@
 #Tremzera
 import os
 import time
-import glob
 import urllib.request
 import wget
-import wmi
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from auxFun import cleanOldFiles, waitToDownload, getPath
+import wmi, cpuinfo
 
 # TO DO:
 # Optmise and make work on Windows sandbox (for all possibilities)
@@ -18,59 +18,18 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 #OBS: Fiquei com preguiça de comentar todo o código então comentei as partes mais importantes e o resto pedi pra uma IA de procedencia duvidosa comentar. (SO COMENTAR PLMDS NÃO SOU VIBE CODER, por mais que eu tenha aprendido a usar selenium em uma... mas não vem ao caso tmj! o resto foi com o Dr-Chuck(Professor em michigan), o cara é brabo.) Abraços pra voce meu amigo.
 
-# HELPER FUNCTIONS (The ones doing the dirty work)
-# FUNÇÕES AUXILIARES (uns negocio pra usar depois)
-
-def cleanOldFiles(destinFolder, pattern):
-    print(f"Cleaning files matching: {pattern}...")
-    filesToDelete = glob.glob(os.path.join(destinFolder, pattern))
-    
-    for file in filesToDelete:
-        try:
-            os.remove(file)
-            print(f"   -> Deleted: {os.path.basename(file)}")
-        except Exception as e:
-            print(f"   -> Error deleting {file}: {e}")
-
-#Função pra esperar o download AMD acabar, vai que a internet do cara é um lixo?
-#E com timeOut pq se esse cara nao baixar um negocio de 50mb em menos de 15 minutos também não merece
-def waitToDownload(folder, maxTimeOut=900):
-    print("Monitoring download progress...")
-    secs = 0
-    
-    while secs < maxTimeOut:
-        time.sleep(1)
-        secs += 1
-        
-        # Check if temporary file still exists / Verifica se arquivo temporário ainda existe
-        filesCrdownload = glob.glob(os.path.join(folder, "*.crdownload"))
-        
-        if filesCrdownload:
-            # Still downloading, be patient / Ainda baixando, seja paciente
-            if secs % 5 == 0:
-                print(f"   ...Downloading ({secs}s)")
-        else:
-            # No more .crdownload? Give it a moment to settle / Sem .crdownload? Dá um tempo pra sentar e ficar tranquilidade extrema rapaiz
-            time.sleep(2)
-            
-            # Check if the final .exe arrived / Verifica se o .exe final chegou
-            exes = glob.glob(os.path.join(folder, "*minimalsetup*.exe"))
-            if exes:
-                return True  # Success! / Sucesso!
-            
-    # Timeout reached, probably failed / Timeout atingido, provavelmente falhou
-    return False
-
 #MAIN FUNCTIONS (Where the magic happens... or doesn't)
 #FUNÇÕES PRINCIPAIS aqui separarmos os homosapiens dos homo sapiens sapiens
 
 def downloadAmd():
+    #It also works with CPUS, so im gonna just re use it
     print("\n[AMD MODULE] Starting process...")
-    currentFolder = os.getcwd()
+    downloadPath = getPath()
+    print(f'Downloads folder created in: {downloadPath}')
 
     # Step 1: Cleanup time! / Passo 1: limpa saporra se tiver arquivo ruim pra não confundir na hora de instalar
-    cleanOldFiles(currentFolder, "*.crdownload")
-    cleanOldFiles(currentFolder, "*minimalsetup*.exe")
+    cleanOldFiles(downloadPath, "*.crdownload")
+    cleanOldFiles(downloadPath, "*minimalsetup*.exe")
 
     # Step 2: Configure our headless Chrome / Passo 2: Configurar nosso Chrome invisível
     ##AMD VAI SE FUDE COM ESSE SITE SEU AI
@@ -86,7 +45,7 @@ def downloadAmd():
     # Download preferences (where to save, don't ask questions, just do it)
     # Preferências de download (onde salvar, não faça perguntas, só faça)
     prefs = {
-        "download.default_directory": currentFolder,
+        "download.default_directory": downloadPath,
         "download.prompt_for_download": False,  # No popups please / Sem popups por favor
         "safebrowsing.enabled": True,
         "profile.default_content_setting_values.automatic_downloads": 1  # Auto-download everything / Auto-baixa tudo
@@ -130,7 +89,7 @@ def downloadAmd():
                 break  # Found it, we're done here / Achou, terminamos aqui
         
         if downloadStarted:
-            success = waitToDownload(currentFolder)
+            success = waitToDownload(downloadPath)
             if success:
                 print("AMD Download - SUCCESS")
             else:
@@ -150,7 +109,8 @@ def downloadNvidia():
     # GOD BLESS NVIDIA
     # ou não vai se fude com esse seus trem de IA e deixar os negocio mais caro
     print("\n[NVIDIA MODULE] Starting process...")
-    currentFolder = os.getcwd()
+    currentFolder = getPath()
+    print(f'Downloaded in {currentFolder}')
     
     # Step 1: Delete old NVIDIA installers / Passo 1: Apagar instaladores velhos da NVIDIA
     cleanOldFiles(currentFolder, "*NVIDIA*.exe")
@@ -184,7 +144,7 @@ def downloadNvidia():
 
         if linkFinal:
             print("Downloading via Wget...")
-            wget.download(linkFinal)  # wget handles the download nicely / wget cuida do download direitinho
+            wget.download(linkFinal, out=currentFolder)  # wget handles the download nicely / wget cuida do download direitinho e joga na pasta que a gente quer
             print("\nNVIDIA Download - SUCCESS")
         else:
             print("No NVIDIA link found.")
@@ -193,8 +153,8 @@ def downloadNvidia():
         print(f"Error in NVIDIA module: {e}")
 
 def downloadIntel():
-
-    currentFolder = os.getcwd
+    #It also works with CPUS, so im gonna just re use it
+    currentFolder = getPath()
     cleanOldFiles(currentFolder, "*Intel*.exe")
     cleanOldFiles(currentFolder, "*Intel-Driver*.exe")
 
@@ -212,7 +172,7 @@ def downloadIntel():
                     downloadButton = downloadB
                     sucess = True
         if sucess:
-            wget.download(downloadButton)
+            wget.download(downloadButton, out=currentFolder)
         else:
             print("Didn't find any download link")
     except Exception as e:
@@ -265,6 +225,33 @@ def verifyHardware():
             print("No dedicated GPU (AMD/NVIDIA/Intel) found.")
             print("WTF ARE U USING?")
 
+        # CPU PART
+        cpu = cpuinfo.get_cpu_info() # Get CPU info...
+        tryCpuCatch = cpu.get('vendor_id_raw', '').lower() #Lets find the vender_id_raw peace on the dict, and if it is authenticamd is AMD, else is intel.
+
+
+        cpuIsIntel = False
+        cpuIsAmd = False
+        if 'authenticamd' in tryCpuCatch:
+            print(f'{cpu['brand_raw']}...')
+            cpuIsAmd = True
+        if 'genuineintel' in tryCpuCatch:
+            print(f'{cpu['brand_raw']}')
+            cpuIsIntel = True
+        
+
+        if cpuIsAmd:
+            if amdFound:
+                print('Chipset driver included in GPU package, skipping...')
+            else:
+                print('Downloading cpu chipset...')
+                downloadAmd()
+        if cpuIsIntel:
+            if intelFound:
+                print('Chipset driver included in GPU package, skipping...')
+            else:
+                print('Downloading cpu chipset...')
+                downloadIntel()
+
     except Exception as error:
         print(f'Hardware Scan Error: {error}')
-
