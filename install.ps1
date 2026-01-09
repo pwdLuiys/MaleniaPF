@@ -90,7 +90,7 @@ try {
     }
 
     $tempPath = "$env:TEMP\MaleniaPF.exe"
-    $url = "https://github.com/pwdLuiys/MaleniaPF/releases/download/1.0/MaleniaPF.exe" 
+    $url = "https://github.com/pwdLuiys/MaleniaPF/releases/download/1.1/MaleniaPF.exe" 
 
     Write-Host "Downloading MaleniaPF" -ForegroundColor Cyan
     Invoke-WebRequest -Uri $url -OutFile $tempPath
