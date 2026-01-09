@@ -12,13 +12,13 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
-# TO DO
-#INTEL GRAPHICS
-#Intel tinha que entrar na resenha de gpu também ne, ficava quieta la
+# TO DO:
+# Optmise and make work on Windows sandbox (for all possibilities)
+# The truth is too make this work on Windows sandbox, i do need to configure the install.ps1 code, not this one... shit, next time maybe?
 
 #OBS: Fiquei com preguiça de comentar todo o código então comentei as partes mais importantes e o resto pedi pra uma IA de procedencia duvidosa comentar. (SO COMENTAR PLMDS NÃO SOU VIBE CODER, por mais que eu tenha aprendido a usar selenium em uma... mas não vem ao caso tmj! o resto foi com o Dr-Chuck(Professor em michigan), o cara é brabo.) Abraços pra voce meu amigo.
 
-# HELPER FUNCTIONS (The ones doing the dirty work) ---
+# HELPER FUNCTIONS (The ones doing the dirty work)
 # FUNÇÕES AUXILIARES (uns negocio pra usar depois)
 
 def cleanOldFiles(destinFolder, pattern):
@@ -61,7 +61,7 @@ def waitToDownload(folder, maxTimeOut=900):
     # Timeout reached, probably failed / Timeout atingido, provavelmente falhou
     return False
 
-#MAIN FUNCTIONS (Where the magic happens... or doesn't) ---
+#MAIN FUNCTIONS (Where the magic happens... or doesn't)
 #FUNÇÕES PRINCIPAIS aqui separarmos os homosapiens dos homo sapiens sapiens
 
 def downloadAmd():
@@ -117,7 +117,7 @@ def downloadAmd():
             href = ele.get_attribute('href')
             
             # Security check: must be .exe AND minimal setup (we don't want random executables)
-            # Checagem de segurança: tem que ser .exe E setup minimalista (não queremos executáveis aleatórios)
+            # Checagem de segurança: tem que ser .exe E minimalsetup (Esse trem é um sufixo padrão dos .exes da AMD se não me egano) (não queremos executáveis aleatórios)
             if href and '.exe' in href and 'minimalsetup' in href.lower():
                 print(f"Link found: {href}")
                 
@@ -192,6 +192,32 @@ def downloadNvidia():
     except Exception as e:
         print(f"Error in NVIDIA module: {e}")
 
+def downloadIntel():
+
+    currentFolder = os.getcwd
+    cleanOldFiles(currentFolder, "*Intel*.exe")
+    cleanOldFiles(currentFolder, "*Intel-Driver*.exe")
+
+    try:
+        url = 'https://www.intel.com/content/www/us/en/support/detect.html'
+        html = urllib.request.urlopen(url).read()
+        soup = BeautifulSoup(html, 'html.parser')
+
+        tags = soup('a')
+        sucess = False
+
+        for tag in tags:
+                downloadB = str(tag.get('href', None))
+                if 'installer' in downloadB:
+                    downloadButton = downloadB
+                    sucess = True
+        if sucess:
+            wget.download(downloadButton)
+        else:
+            print("Didn't find any download link")
+    except Exception as e:
+        print(f'Error in Intel module! {e}')
+
 def verifyHardware():
     print("\nScanning Hardware...")
     
@@ -202,18 +228,22 @@ def verifyHardware():
 
         amdFound = False
         nvidiaFound = False
+        intelFound = False
 
         print('   Hardware List:')
         for gpu in gpus:
             gpuName = gpu.Name
             print(f'   -> {gpuName}')
 
-            # Check if it's NVIDIA or AMD/Radeon
-            # Verifica se é NVIDIA ou AMD/Radeon
+            # Check if it's NVIDIA or AMD/Radeon or Intel
+            # Verifica se é NVIDIA ou AMD/Radeon ou Intel
             if 'NVIDIA' in gpuName.upper():
                 nvidiaFound = True
             if 'AMD' in gpuName.upper() or 'RADEON' in gpuName.upper():
                 amdFound = True
+            if 'INTEL' in gpuName.upper():
+                intelFound = True
+            
         
         print("-" * 30)
         
@@ -226,17 +256,20 @@ def verifyHardware():
         if amdFound:
             print("AMD GPU Detected.")
             downloadAmd()
+        
+        if intelFound:
+            print("Intel GPU Detected")
+            downloadIntel()
             
-        if not nvidiaFound and not amdFound:
-            print("No dedicated GPU (AMD/NVIDIA) found.")
-            print("Probably using integrated graphics. Intel support coming soon!")
+        if not nvidiaFound and not amdFound and not intelFound:
+            print("No dedicated GPU (AMD/NVIDIA/Intel) found.")
+            print("WTF ARE U USING?")
 
     except Exception as error:
         print(f'Hardware Scan Error: {error}')
 
-
-# --- ENTRY POINT (Where it all begins) ---
-# --- PONTO DE ENTRADA (Onde tudo começa) ---
+# ENTRY POINT (Where it all begins)
+# PONTO DE ENTRADA (Onde as garotas molham suas calcinhas)
 if __name__ == "__main__":
     print("="*40)
     print("   MaleniaPF - Post Format Tool")

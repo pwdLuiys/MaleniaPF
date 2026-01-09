@@ -1,4 +1,3 @@
-
 $ErrorActionPreference = "Stop"
 
 Write-Host "⚔️  MaleniaPF is preparing your PC..." -ForegroundColor Magenta
@@ -18,7 +17,7 @@ function Test-ChromeInstalled {
     return $false
 }
 
-function Ensure-Browser {
+function EnsureBrowser {
     if (Test-ChromeInstalled) {
         Write-Host "Chrome detected" -ForegroundColor Green
         return
@@ -83,7 +82,7 @@ function Ensure-Browser {
 }
 
 try {
-    Ensure-Browser
+    EnsureBrowser
 
     if (-not (Test-ChromeInstalled)) {
         Write-Host "We must not continue." -ForegroundColor Red
